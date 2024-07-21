@@ -1,7 +1,5 @@
-# lib/employee.py
 from __init__ import CURSOR, CONN
 from department import Department
-
 
 class Employee:
 
@@ -15,10 +13,42 @@ class Employee:
         self.department_id = department_id
 
     def __repr__(self):
-        return (
-            f"<Employee {self.id}: {self.name}, {self.job_title}, " +
-            f"Department ID: {self.department_id}>"
-        )
+        return (f"<Employee {self.id}: {self.name}, {self.job_title}, " +
+                f"Department ID: {self.department_id}>")
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        if not isinstance(value, str):
+            raise ValueError("Name must be a string.")
+        if len(value) == 0:
+            raise ValueError("Name cannot be empty.")
+        self._name = value
+
+    @property
+    def job_title(self):
+        return self._job_title
+
+    @job_title.setter
+    def job_title(self, value):
+        if not isinstance(value, str):
+            raise ValueError("Job title must be a string.")
+        if len(value) == 0:
+            raise ValueError("Job title cannot be empty.")
+        self._job_title = value
+
+    @property
+    def department_id(self):
+        return self._department_id
+
+    @department_id.setter
+    def department_id(self, value):
+        if not isinstance(value, int):
+            raise ValueError("Department ID must be an integer.")
+        self._department_id = value
 
     @classmethod
     def create_table(cls):
@@ -90,6 +120,9 @@ class Employee:
     @classmethod
     def create(cls, name, job_title, department_id):
         """ Initialize a new Employee instance and save the object to the database """
+        # Validate department_id
+        if Department.find_by_id(department_id) is None:
+            raise ValueError("Invalid department ID.")
         employee = cls(name, job_title, department_id)
         employee.save()
         return employee
@@ -98,7 +131,7 @@ class Employee:
     def instance_from_db(cls, row):
         """Return an Employee object having the attribute values from the table row."""
 
-        # Check the dictionary for  existing instance using the row's primary key
+        # Check the dictionary for existing instance using the row's primary key
         employee = cls.all.get(row[0])
         if employee:
             # ensure attributes match row values in case local instance was modified
@@ -114,7 +147,7 @@ class Employee:
 
     @classmethod
     def get_all(cls):
-        """Return a list containing one Employee object per table row"""
+        """Return a list containing an Employee object per row in the table"""
         sql = """
             SELECT *
             FROM employees
@@ -126,7 +159,7 @@ class Employee:
 
     @classmethod
     def find_by_id(cls, id):
-        """Return Employee object corresponding to the table row matching the specified primary key"""
+        """Return an Employee object corresponding to the table row matching the specified primary key"""
         sql = """
             SELECT *
             FROM employees
@@ -138,12 +171,23 @@ class Employee:
 
     @classmethod
     def find_by_name(cls, name):
-        """Return Employee object corresponding to first table row matching specified name"""
+        """Return an Employee object corresponding to the first table row matching the specified name"""
         sql = """
             SELECT *
             FROM employees
-            WHERE name is ?
+            WHERE name = ?
         """
 
         row = CURSOR.execute(sql, (name,)).fetchone()
         return cls.instance_from_db(row) if row else None
+
+    @classmethod
+    def find_by_department(cls, department_id):
+        """Return a list of Employee objects corresponding to the rows with the specified department_id"""
+        sql = """
+            SELECT *
+            FROM employees
+            WHERE department_id = ?
+        """
+        rows = CURSOR.execute(sql, (department_id,)).fetchall()
+        return [cls.instance_from_db(row) for row in rows]

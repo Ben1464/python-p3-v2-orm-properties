@@ -1,6 +1,4 @@
-# lib/department.py
 from __init__ import CURSOR, CONN
-
 
 class Department:
 
@@ -9,11 +7,35 @@ class Department:
 
     def __init__(self, name, location, id=None):
         self.id = id
-        self.name = name
-        self.location = location
+        self.name = name  # This will call the name property setter
+        self.location = location  # This will call the location property setter
 
     def __repr__(self):
         return f"<Department {self.id}: {self.name}, {self.location}>"
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        if not isinstance(value, str):
+            raise ValueError("Name must be a string.")
+        if len(value) == 0:
+            raise ValueError("Name cannot be empty.")
+        self._name = value
+
+    @property
+    def location(self):
+        return self._location
+
+    @location.setter
+    def location(self, value):
+        if not isinstance(value, str):
+            raise ValueError("Location must be a string.")
+        if len(value) == 0:
+            raise ValueError("Location cannot be empty.")
+        self._location = value
 
     @classmethod
     def create_table(cls):
@@ -133,7 +155,7 @@ class Department:
         sql = """
             SELECT *
             FROM departments
-            WHERE name is ?
+            WHERE name = ?
         """
 
         row = CURSOR.execute(sql, (name,)).fetchone()
@@ -146,7 +168,7 @@ class Department:
             SELECT * FROM employees
             WHERE department_id = ?
         """
-        CURSOR.execute(sql, (self.id,),)
+        CURSOR.execute(sql, (self.id,))
 
         rows = CURSOR.fetchall()
         return [
